@@ -1,0 +1,170 @@
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <string>
+
+class MyDate {
+private:
+	int day;
+	int month;
+	int year;
+	static int type; 
+
+	
+	static bool isLeapYear(int y) {
+		return (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0));
+	}
+
+	
+	static int daysInMonth(int m, int y) {
+		if (m == 2)
+			return isLeapYear(y) ? 29 : 28;
+		if (m == 4 || m == 6 || m == 9 || m == 11)
+			return 30;
+		return 31; 
+	}
+
+public:
+	
+	MyDate() : day(1), month(1), year(2023) {}
+
+
+	MyDate(int d, int m, int y) : day(d), month(m), year(y) {}
+
+	
+	MyDate(const MyDate& other) : day(other.day), month(other.month), year(other.year) {}
+
+
+	MyDate(const std::string& date) {
+		std::istringstream ss(date);
+		char delimiter;
+		ss >> day >> delimiter >> month >> delimiter >> year;
+	}
+
+	
+	void setDay(int d) { day = d; }
+	int getDay() const { return day; }
+
+	void setMonth(int m) { month = m; }
+	int getMonth() const { return month; }
+
+	void setYear(int y) { year = y; }
+	int getYear() const { return year; }
+
+	
+	static void setType(int t) { type = t; }
+	static int getType() { return type; }
+
+	
+	friend std::ostream& operator<<(std::ostream& os, const MyDate& date) {
+		if (type == 1) {
+			os << date.day << "." << date.month << "." << date.year;
+		}
+		else if (type == 2) {
+			os << std::setw(2) << std::setfill('0') << date.day << "."
+				<< std::setw(2) << std::setfill('0') << date.month << "."
+				<< date.year;
+		}
+		else if (type == 3) {
+			static const char* months[] = { "", "января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря" };
+			os << std::setw(2) << std::setfill('0') << date.day << " "
+				<< months[date.month] << " " << date.year << " года";
+		}
+		else if (type == 4) {
+			os << date.year << "-"
+				<< std::setw(2) << std::setfill('0') << date.month << "-"
+				<< std::setw(2) << std::setfill('0') << date.day;
+		}
+		return os;
+	}
+
+	
+	friend std::istream& operator>>(std::istream& is, MyDate& date) {
+		char delimiter;
+		is >> date.day >> delimiter >> date.month >> delimiter >> date.year;
+		return is;
+	}
+
+	
+	MyDate& operator++() {
+		
+		day++;
+		if (day > daysInMonth(month, year)) {
+			day = 1;
+			month++;
+			if (month > 12) {
+				month = 1;
+				year++;
+			}
+		}
+		return *this;
+	}
+
+
+	MyDate& operator--() {
+	
+		day--;
+		if (day < 1) {
+			month--;
+			if (month < 1) {
+				month = 12;
+				year--;
+			}
+			day = daysInMonth(month, year);
+		}
+		return *this;
+	}
+
+
+	MyDate operator+(int days) const {
+		MyDate result(*this);
+		for (int i = 0; i < days; i++) {
+			++result;
+		}
+		return result;
+	}
+
+	
+	friend MyDate operator+(int days, const MyDate& date) {
+		return date + days;
+	}
+
+	
+	bool operator==(const MyDate& other) const {
+		return (day == other.day && month == other.month && year == other.year);
+	}
+
+	
+	bool operator<(const MyDate& other) const {
+		if (year != other.year) return year < other.year;
+		if (month != other.month) return month < other.month;
+		return day < other.day;
+	}
+
+	
+	bool operator<=(const MyDate& other) const {
+		return (*this < other) || (*this == other);
+	}
+};
+
+
+int MyDate::type = 1; 
+
+int main() {
+	setlocale(LC_ALL, "Russian");
+	MyDate date("1.1.2025");
+	MyDate::setType(3);
+	std::cout << "Date: " << date << std::endl;
+
+	++date;
+	std::cout << "Next Day: " << date << std::endl;
+
+	--date;
+	--date;
+	std::cout << "Previous Day: " << date << std::endl;
+
+	MyDate date2(1, 1, 2025);
+	std::cout << (date == date2) << std::endl; // true
+
+	return 0;
+}
